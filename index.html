@@ -10,12 +10,36 @@
       background-color: #000000;
       color: #ffffff;
       font-family: Arial, sans-serif;
-      padding: 20px;
+      padding: 0;
+      margin: 0;
+    }
+
+    nav {
+      background-color: #f4a261;
+      padding: 15px;
+      display: flex;
+      justify-content: center;
+      border-bottom: 4px solid #264653;
+      gap: 30px;
+    }
+
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    nav a:hover {
+      background-color: #e76f51;
+      padding: 10px;
+      border-radius: 5px;
     }
 
     .container {
       max-width: 600px;
-      margin: 0 auto;
+      margin: 20px auto;
       background-color: #1c1c1c;
       padding: 20px;
       border-radius: 10px;
@@ -91,10 +115,27 @@
       font-size: 16px;
       cursor: pointer;
     }
+
+    .seccion {
+      display: none;
+    }
+
+    .activa {
+      display: block;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
+
+  <!-- NAVBAR -->
+  <nav>
+    <a onclick="mostrarSeccion('inicio')">Inicio</a>
+    <a onclick="mostrarSeccion('registros')">Registros</a>
+    <a onclick="mostrarSeccion('graficas')">Gráficas</a>
+  </nav>
+
+  <!-- INICIO -->
+  <div id="inicio" class="container seccion activa">
     <h1>Simulador de Ahorro Mensual</h1>
 
     <h3>Mes del registro</h3>
@@ -113,7 +154,6 @@
 
     <div class="btn-center">
       <button onclick="agregarGasto()">Agregar gasto</button>
-      <button onclick="mostrarComparacion()">Ver comparación por meses</button>
     </div>
 
     <div id="gastos"></div>
@@ -123,52 +163,63 @@
     </div>
 
     <div id="resultado"></div>
+  </div>
+
+  <!-- REGISTROS -->
+  <div id="registros" class="container seccion">
+    <h2 style="color: orange; text-align: center;">Comparación por Meses</h2>
+    <div class="btn-center">
+      <button onclick="mostrarComparacion()">Actualizar tabla</button>
+    </div>
     <div id="tablaComparacion"></div>
   </div>
 
+  <!-- GRAFICAS -->
+  <div id="graficas" class="container seccion">
+    <h2 style="color: lightgreen; text-align: center;">Gráficas de Ahorro</h2>
+    <canvas id="graficoAhorro" width="400" height="300"></canvas>
+  </div>
+
+  <!-- SCRIPT -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     let listaGastos = [];
     let registrosMensuales = [];
+
+    function mostrarSeccion(id) {
+      document.querySelectorAll('.seccion').forEach(sec => sec.classList.remove('activa'));
+      document.getElementById(id).classList.add('activa');
+
+      if (id === 'graficas') {
+        generarGrafica();
+      }
+    }
 
     function formatearIngreso() {
       const ingresoInput = document.getElementById('ingreso');
       const ingresoFormateado = document.getElementById('ingresoFormateado');
       const valor = parseFloat(ingresoInput.value);
-
-      if (!isNaN(valor)) {
-        ingresoFormateado.textContent = `Ingreso escrito: $${valor.toLocaleString('es-CO')}`;
-      } else {
-        ingresoFormateado.textContent = '';
-      }
+      ingresoFormateado.textContent = isNaN(valor) ? '' : `Ingreso escrito: $${valor.toLocaleString('es-CO')}`;
     }
 
     function formatearValorGasto() {
       const valorInput = document.getElementById('valorGasto');
       const valorFormateado = document.getElementById('valorGastoFormateado');
       const valor = parseFloat(valorInput.value);
-
-      if (!isNaN(valor)) {
-        valorFormateado.textContent = `Valor escrito: $${valor.toLocaleString('es-CO')}`;
-      } else {
-        valorFormateado.textContent = '';
-      }
+      valorFormateado.textContent = isNaN(valor) ? '' : `Valor escrito: $${valor.toLocaleString('es-CO')}`;
     }
 
     function agregarGasto() {
       const nombre = document.getElementById('nombreGasto').value;
       const valor = parseFloat(document.getElementById('valorGasto').value);
-
       if (!nombre || isNaN(valor) || valor <= 0) {
         alert('Por favor ingresa un nombre de gasto y un valor válido.');
         return;
       }
-
       listaGastos.push({ nombre, valor });
-
       document.getElementById('nombreGasto').value = '';
       document.getElementById('valorGasto').value = '';
       document.getElementById('valorGastoFormateado').textContent = '';
-
       mostrarGastos();
     }
 
@@ -189,38 +240,23 @@
     function calcularAhorro() {
       const ingreso = parseFloat(document.getElementById('ingreso').value);
       const mesRegistro = document.getElementById('mesRegistro').value;
-
-      if (!mesRegistro) {
-        alert('Por favor ingresa el mes del registro.');
-        return;
-      }
-
-      if (isNaN(ingreso) || ingreso <= 0) {
-        alert('Por favor ingresa un ingreso mensual válido.');
+      if (!mesRegistro || isNaN(ingreso) || ingreso <= 0) {
+        alert('Completa los campos correctamente.');
         return;
       }
 
       const totalGastos = listaGastos.reduce((total, gasto) => total + gasto.valor, 0);
       const ahorro = ingreso - totalGastos;
-
-      registrosMensuales.push({
-        mes: mesRegistro,
-        ingreso,
-        gastos: [...listaGastos],
-        totalGastos,
-        ahorro
-      });
+      registrosMensuales.push({ mes: mesRegistro, ingreso, gastos: [...listaGastos], totalGastos, ahorro });
 
       let mensaje = `
         Ingreso mensual: $${ingreso.toLocaleString('es-CO')}<br>
         Total de gastos: $${totalGastos.toLocaleString('es-CO')}<br>
       `;
 
-      if (ahorro < 0) {
-        mensaje += `<span style="color: red;">Estás gastando más de lo que ganas. Déficit de $${Math.abs(ahorro).toLocaleString('es-CO')}</span>`;
-      } else {
-        mensaje += `Puedes ahorrar: <span style="color: #28a745;">$${ahorro.toLocaleString('es-CO')}</span>`;
-      }
+      mensaje += ahorro < 0
+        ? `<span style="color: red;">Estás en déficit: $${Math.abs(ahorro).toLocaleString('es-CO')}</span>`
+        : `Puedes ahorrar: <span style="color: #28a745;">$${ahorro.toLocaleString('es-CO')}</span>`;
 
       document.getElementById('resultado').innerHTML = mensaje;
     }
@@ -233,15 +269,9 @@
       }
 
       let tablaHTML = `
-        <h3>Comparación Mensual</h3>
         <table border="1" style="width:100%; border-collapse: collapse; background: #333; color: #fff;">
           <thead>
-            <tr>
-              <th>Mes</th>
-              <th>Ingreso</th>
-              <th>Total Gastos</th>
-              <th>Ahorro</th>
-            </tr>
+            <tr><th>Mes</th><th>Ingreso</th><th>Total Gastos</th><th>Ahorro</th></tr>
           </thead>
           <tbody>
       `;
@@ -252,16 +282,46 @@
             <td>${reg.mes}</td>
             <td>$${reg.ingreso.toLocaleString('es-CO')}</td>
             <td>$${reg.totalGastos.toLocaleString('es-CO')}</td>
-            <td style="color: ${reg.ahorro < 0 ? 'red' : 'lightgreen'}">
-              $${reg.ahorro.toLocaleString('es-CO')}
-            </td>
+            <td style="color: ${reg.ahorro < 0 ? 'red' : 'lightgreen'}">$${reg.ahorro.toLocaleString('es-CO')}</td>
           </tr>
         `;
       });
 
-      tablaHTML += `</tbody></table>`;
+      tablaHTML += '</tbody></table>';
       contenedor.innerHTML = tablaHTML;
+    }
+
+    function generarGrafica() {
+      const ctx = document.getElementById('graficoAhorro').getContext('2d');
+      if (window.graficoAhorro) window.graficoAhorro.destroy();
+
+      const labels = registrosMensuales.map(r => r.mes);
+      const datos = registrosMensuales.map(r => r.ahorro);
+
+      window.graficoAhorro = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Ahorro por mes',
+            data: datos,
+            backgroundColor: datos.map(v => v >= 0 ? 'lightgreen' : 'red'),
+            borderRadius: 5
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: value => `$${value.toLocaleString('es-CO')}`
+              }
+            }
+          }
+        }
+      });
     }
   </script>
 </body>
 </html>
+
