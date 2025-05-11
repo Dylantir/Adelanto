@@ -231,6 +231,20 @@
     let listaGastos = [];
     let registrosMensuales = [];
 
+    window.onload = function() {
+      const gastosGuardados = localStorage.getItem('listaGastos');
+      const registrosGuardados = localStorage.getItem('registrosMensuales');
+
+      if (gastosGuardados) {
+        listaGastos = JSON.parse(gastosGuardados);
+        mostrarGastos();
+      }
+
+      if (registrosGuardados) {
+        registrosMensuales = JSON.parse(registrosGuardados);
+      }
+    };
+
     function formatearIngreso() {
       const ingreso = parseFloat(document.getElementById('ingreso').value);
       document.getElementById('ingresoFormateado').textContent =
@@ -259,6 +273,7 @@
       document.getElementById('valorGastoFormateado').textContent = '';
 
       mostrarGastos();
+      guardarDatos();
     }
 
     function mostrarGastos() {
@@ -273,6 +288,7 @@
     function eliminarGasto(index) {
       listaGastos.splice(index, 1);
       mostrarGastos();
+      guardarDatos();
     }
 
     function calcularAhorro() {
@@ -302,6 +318,7 @@
           ? `Puedes ahorrar: <span style="color:lightgreen;">$${ahorro.toLocaleString('es-CO')}</span>` 
           : `<span style="color:red;">Déficit de $${Math.abs(ahorro).toLocaleString('es-CO')}</span>`}
       `;
+      guardarDatos();
     }
 
     function mostrarSeccion(seccion) {
@@ -395,9 +412,8 @@
         });
       }
     }
+    function guardarDatos() {
+      localStorage.setItem('listaGastos', JSON.stringify(listaGastos::contentReference[oaicite:0]{index=0}
   </script>
 </body>
 </html>
-
-
-
